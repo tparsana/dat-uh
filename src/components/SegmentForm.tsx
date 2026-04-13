@@ -3,7 +3,6 @@ import { Segment, STAGE_LABELS } from "@/lib/types";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { Switch } from "./ui/switch";
 import { Textarea } from "./ui/textarea";
 import { ChevronDown, Copy } from "lucide-react";
 import {
@@ -20,6 +19,9 @@ import {
 } from "./ui/collapsible";
 
 interface Props {
+  videoName: string;
+  onVideoNameChange: (value: string) => void;
+  resetSignal: number;
   onAdd: (segment: Omit<Segment, "id">) => void;
   onUpdate: (segment: Segment) => void;
   editing: Segment | null;
@@ -32,7 +34,7 @@ const EMPTY: Omit<Segment, "id"> = {
   frame_start: 0,
   frame_end: 0,
   scene_number: 1,
-  full_nor_not: "Full",
+  full_nor_not: "",
   pill_color: "",
   pill_box: "",
   day: "",
@@ -40,23 +42,42 @@ const EMPTY: Omit<Segment, "id"> = {
   notes: "",
 };
 
-export function SegmentForm({ onAdd, onUpdate, editing, onCancelEdit, lastSegment }: Props) {
+export function SegmentForm({
+  videoName,
+  onVideoNameChange,
+  resetSignal,
+  onAdd,
+  onUpdate,
+  editing,
+  onCancelEdit,
+  lastSegment,
+}: Props) {
   const [form, setForm] = useState<Omit<Segment, "id">>(EMPTY);
-  const [usePrev, setUsePrev] = useState(true);
-  const [autoIncScene, setAutoIncScene] = useState(false);
   const [optionalOpen, setOptionalOpen] = useState(false);
   const frameStartRef = useRef<HTMLInputElement>(null);
+  const frameEndRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (editing) {
-      const { id, ...rest } = editing;
+      const { id: _id, ...rest } = editing;
       setForm(rest);
       // Open optional fields if any are filled
-      if (rest.full_nor_not !== "Full" || rest.pill_color || rest.pill_box || rest.day || rest.time_of_day || rest.notes) {
+      if (rest.full_nor_not || rest.pill_color || rest.pill_box || rest.day || rest.time_of_day || rest.notes) {
         setOptionalOpen(true);
       }
+    } else if (lastSegment) {
+      setForm(prev => ({
+        ...prev,
+        frame_start: lastSegment.frame_end,
+        frame_end: prev.frame_end === prev.frame_start ? lastSegment.frame_end : prev.frame_end,
+      }));
     }
-  }, [editing]);
+  }, [editing, lastSegment]);
+
+  useEffect(() => {
+    setForm(EMPTY);
+    setOptionalOpen(false);
+  }, [resetSignal]);
 
   const set = useCallback((key: string, value: any) => {
     setForm(prev => ({ ...prev, [key]: value }));
@@ -67,38 +88,42 @@ export function SegmentForm({ onAdd, onUpdate, editing, onCancelEdit, lastSegmen
       onUpdate({ ...form, id: editing.id });
     } else {
       onAdd(form);
-      if (usePrev && lastSegment) {
-        setForm(prev => ({
-          ...prev,
-          frame_start: 0,
-          frame_end: 0,
-          notes: "",
-          scene_number: autoIncScene ? prev.scene_number + 1 : prev.scene_number,
-        }));
-      } else {
-        setForm(prev => ({
-          ...EMPTY,
-          label: prev.label,
-          scene_number: autoIncScene ? prev.scene_number + 1 : EMPTY.scene_number,
-        }));
-      }
+      setForm(prev => ({
+        ...EMPTY,
+        label: prev.label,
+        scene_number: prev.scene_number,
+        frame_start: form.frame_end,
+        frame_end: form.frame_end,
+      }));
     }
-    frameStartRef.current?.focus();
+    frameEndRef.current?.focus();
   };
 
   const handleDuplicate = () => {
     if (lastSegment) {
-      const { id, ...rest } = lastSegment;
+      const { id: _id, ...rest } = lastSegment;
       setForm({
         ...rest,
-        scene_number: autoIncScene ? rest.scene_number + 1 : rest.scene_number,
+        frame_start: lastSegment.frame_end,
+        frame_end: lastSegment.frame_end,
       });
+      frameEndRef.current?.focus();
     }
   };
 
   const handleClear = () => {
-    setForm(EMPTY);
+    setForm({
+      ...EMPTY,
+      scene_number: form.scene_number,
+      frame_start: lastSegment?.frame_end ?? 0,
+      frame_end: lastSegment?.frame_end ?? 0,
+    });
     onCancelEdit();
+    if (lastSegment) {
+      frameEndRef.current?.focus();
+    } else {
+      frameStartRef.current?.focus();
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -112,6 +137,16 @@ export function SegmentForm({ onAdd, onUpdate, editing, onCancelEdit, lastSegmen
 
   return (
     <div className="space-y-4" onKeyDown={handleKeyDown}>
+      <div className="space-y-1.5">
+        <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Video Name</Label>
+        <Input
+          value={videoName}
+          onChange={e => onVideoNameChange(e.target.value)}
+          placeholder="Enter video filename..."
+          className="font-mono rounded-xl"
+        />
+      </div>
+
       {/* Stage selector */}
       <div className="space-y-1.5">
         <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Stage</Label>
@@ -121,7 +156,7 @@ export function SegmentForm({ onAdd, onUpdate, editing, onCancelEdit, lastSegmen
           </SelectTrigger>
           <SelectContent>
             {STAGE_LABELS.map((label, i) => (
-              <SelectItem key={i} value={String(i)}>{label} ({i})</SelectItem>
+              <SelectItem key={i} value={String(i)}>{i} - {label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -144,6 +179,7 @@ export function SegmentForm({ onAdd, onUpdate, editing, onCancelEdit, lastSegmen
         <div className="space-y-1.5">
           <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Frame End</Label>
           <Input
+            ref={frameEndRef}
             type="number"
             min={0}
             value={form.frame_end || ""}
@@ -165,6 +201,7 @@ export function SegmentForm({ onAdd, onUpdate, editing, onCancelEdit, lastSegmen
           onChange={e => set("scene_number", Number(e.target.value))}
           className="rounded-xl tabular-nums"
         />
+        <p className="text-[11px] text-muted-foreground/70">Participant Video Number</p>
       </div>
 
       {/* Optional fields - collapsible */}
@@ -180,9 +217,9 @@ export function SegmentForm({ onAdd, onUpdate, editing, onCancelEdit, lastSegmen
           {/* Full or not */}
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Full or Not</Label>
-            <Select value={form.full_nor_not} onValueChange={v => set("full_nor_not", v)}>
+            <Select value={form.full_nor_not || undefined} onValueChange={v => set("full_nor_not", v)}>
               <SelectTrigger className="rounded-xl">
-                <SelectValue />
+                <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Full">Full</SelectItem>
@@ -225,22 +262,10 @@ export function SegmentForm({ onAdd, onUpdate, editing, onCancelEdit, lastSegmen
         </CollapsibleContent>
       </Collapsible>
 
-      {/* Speed toggles */}
-      <div className="flex flex-wrap gap-4 py-2 border-t border-border pt-4">
-        <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground cursor-pointer">
-          <Switch checked={usePrev} onCheckedChange={setUsePrev} />
-          Use previous
-        </label>
-        <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground cursor-pointer">
-          <Switch checked={autoIncScene} onCheckedChange={setAutoIncScene} />
-          Auto-increment
-        </label>
-      </div>
-
       {/* Buttons */}
       <div className="flex flex-wrap gap-2">
         <Button onClick={handleSubmit} className="flex-1 rounded-xl h-10">
-          {editing ? "Update Segment" : "Add Segment"}
+          {editing ? "Update Stage" : "Add Stage"}
         </Button>
         {!editing && lastSegment && (
           <Button variant="secondary" onClick={handleDuplicate} className="rounded-xl h-10">

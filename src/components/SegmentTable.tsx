@@ -26,7 +26,7 @@ export function SegmentTable({ segments, onEdit, onDelete, selectedId }: Props) 
 
   // Check if any optional columns have data
   const hasOptional = sorted.some(s => 
-    s.full_nor_not !== "Full" || s.pill_color || s.pill_box || s.day || s.time_of_day || s.notes
+    s.full_nor_not || s.pill_color || s.pill_box || s.day || s.time_of_day || s.notes
   );
 
   return (
@@ -34,10 +34,10 @@ export function SegmentTable({ segments, onEdit, onDelete, selectedId }: Props) 
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border bg-muted/30">
-            <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Label</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Stage</th>
             <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Start</th>
             <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">End</th>
-            <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Scene</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Video #</th>
             {hasOptional && (
               <>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Full</th>
@@ -70,8 +70,8 @@ export function SegmentTable({ segments, onEdit, onDelete, selectedId }: Props) 
                   <span className="inline-flex items-center gap-1.5">
                     <span className={`h-2 w-2 rounded-full bg-stage-${['bg','open','pill','mouth','close'][seg.label]}`} 
                       style={{ backgroundColor: `hsl(var(--stage-${['bg','open','pill','mouth','close'][seg.label]}))` }} />
-                    <span className="font-medium">{STAGE_LABELS[seg.label]}</span>
-                    <span className="text-muted-foreground">({seg.label})</span>
+                    <span className="font-medium">{seg.label}</span>
+                    <span className="text-muted-foreground">{STAGE_LABELS[seg.label]}</span>
                   </span>
                 </td>
                 <td className="px-4 py-3 tabular-nums font-medium">{seg.frame_start}</td>
