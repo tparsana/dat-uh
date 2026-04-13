@@ -19,7 +19,7 @@ export function ThemeToggle() {
   }, []);
 
   return (
-    <Button variant="ghost" size="icon" onClick={() => setDark(!dark)}>
+    <Button variant="ghost" size="icon" onClick={() => setDark(!dark)} className="rounded-xl h-9 w-9">
       {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
     </Button>
   );

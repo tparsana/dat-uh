@@ -32,9 +32,12 @@ export function Timeline({ segments, onSelect }: Props) {
   if (segments.length === 0) return null;
 
   return (
-    <div className="space-y-2">
-      <h3 className="text-sm font-medium text-muted-foreground">Timeline</h3>
-      <div className="relative h-16 bg-muted rounded-lg overflow-hidden border border-border">
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-foreground">Timeline</h3>
+        <span className="text-xs text-muted-foreground tabular-nums">{minFrame} – {maxFrame} frames</span>
+      </div>
+      <div className="relative h-14 bg-muted/50 rounded-xl overflow-hidden">
         {segments.map(seg => {
           const left = ((seg.frame_start - minFrame) / range) * 100;
           const width = ((seg.frame_end - seg.frame_start) / range) * 100;
@@ -42,12 +45,13 @@ export function Timeline({ segments, onSelect }: Props) {
           return (
             <div
               key={seg.id}
-              className="absolute top-2 h-12 rounded cursor-pointer transition-opacity"
+              className="absolute top-2 h-10 rounded-lg cursor-pointer transition-all duration-150"
               style={{
                 left: `${left}%`,
                 width: `${Math.max(width, 0.5)}%`,
                 backgroundColor: COLORS[seg.label],
-                opacity: isHovered ? 1 : 0.8,
+                opacity: isHovered ? 1 : 0.75,
+                transform: isHovered ? "scaleY(1.1)" : "scaleY(1)",
               }}
               onMouseEnter={() => setHoveredId(seg.id)}
               onMouseLeave={() => setHoveredId(null)}
@@ -56,9 +60,6 @@ export function Timeline({ segments, onSelect }: Props) {
             />
           );
         })}
-        {/* Frame labels */}
-        <span className="absolute bottom-0 left-1 text-[10px] text-muted-foreground">{minFrame}</span>
-        <span className="absolute bottom-0 right-1 text-[10px] text-muted-foreground">{maxFrame}</span>
       </div>
       {hoveredId && (() => {
         const seg = segments.find(s => s.id === hoveredId);
@@ -72,8 +73,8 @@ export function Timeline({ segments, onSelect }: Props) {
       {/* Legend */}
       <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
         {STAGE_LABELS.map((label, i) => (
-          <span key={i} className="flex items-center gap-1">
-            <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: COLORS[i] }} />
+          <span key={i} className="flex items-center gap-1.5">
+            <span className="inline-block w-3 h-3 rounded-md" style={{ backgroundColor: COLORS[i] }} />
             {label}
           </span>
         ))}
