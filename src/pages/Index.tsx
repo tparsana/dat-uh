@@ -8,21 +8,19 @@ import { SegmentTable } from "@/components/SegmentTable";
 import { Timeline } from "@/components/Timeline";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Download, Trash2 } from "lucide-react";
+import { Download, Trash2, Film } from "lucide-react";
 
 export default function Index() {
   const [videoName, setVideoName] = useState("");
   const [segments, setSegments] = useState<Segment[]>([]);
   const [editing, setEditing] = useState<Segment | null>(null);
 
-  // Load from localStorage
   useEffect(() => {
     const data = loadData();
     setVideoName(data.videoName);
     setSegments(data.segments);
   }, []);
 
-  // Auto-save
   useEffect(() => {
     saveData({ videoName, segments });
   }, [videoName, segments]);
@@ -54,35 +52,59 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-10 border-b border-border bg-card/80 backdrop-blur-sm">
-        <div className="container flex items-center justify-between py-3">
-          <h1 className="text-lg font-bold tracking-tight text-foreground">dat-uh</h1>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground tabular-nums">
-              {segments.length} segment{segments.length !== 1 ? "s" : ""}
-            </span>
+      <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-md">
+        <div className="container flex items-center justify-between py-4">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center">
+              <Film className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <h1 className="text-xl font-bold tracking-tight text-foreground">dat-uh</h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-2 rounded-full bg-muted px-3 py-1.5">
+              <span className="text-xs font-medium text-muted-foreground tabular-nums">
+                {segments.length} segment{segments.length !== 1 ? "s" : ""}
+              </span>
+            </div>
             <ThemeToggle />
           </div>
         </div>
       </header>
 
-      <main className="container py-6">
-        {/* Video name */}
-        <div className="mb-6 max-w-md">
-          <label className="text-sm font-medium text-foreground mb-1.5 block">Video Name</label>
+      <main className="container py-6 space-y-6">
+        {/* Video name card */}
+        <div className="rounded-2xl bg-card border border-border p-5 shadow-sm">
+          <label className="text-sm font-semibold text-foreground mb-2 block">Video Name</label>
           <Input
             value={videoName}
             onChange={e => setVideoName(e.target.value)}
             placeholder="Enter video filename…"
-            className="font-mono"
+            className="font-mono max-w-md rounded-xl"
           />
         </div>
 
+        {/* Stats cards */}
+        {segments.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: "Total Segments", value: segments.length, color: "bg-primary/10 text-primary" },
+              { label: "Frame Range", value: `${Math.min(...segments.map(s => s.frame_start))}–${Math.max(...segments.map(s => s.frame_end))}`, color: "bg-stage-open/20 text-foreground" },
+              { label: "Scenes", value: new Set(segments.map(s => s.scene_number)).size, color: "bg-stage-pill/20 text-foreground" },
+              { label: "Stages Used", value: new Set(segments.map(s => s.label)).size, color: "bg-stage-mouth/20 text-foreground" },
+            ].map((stat) => (
+              <div key={stat.label} className={`rounded-2xl border border-border p-4 shadow-sm bg-card`}>
+                <p className="text-xs font-medium text-muted-foreground mb-1">{stat.label}</p>
+                <p className={`text-xl font-bold tabular-nums ${stat.color.split(' ')[1] || 'text-foreground'}`}>{stat.value}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Two-column layout */}
-        <div className="grid lg:grid-cols-[380px_1fr] gap-6">
+        <div className="grid lg:grid-cols-[400px_1fr] gap-6">
           {/* Left: Form */}
-          <div className="bg-card rounded-lg border border-border p-5 self-start lg:sticky lg:top-20">
-            <h2 className="text-sm font-semibold text-foreground mb-4">
+          <div className="rounded-2xl bg-card border border-border p-6 shadow-sm self-start lg:sticky lg:top-20">
+            <h2 className="text-base font-bold text-foreground mb-5">
               {editing ? "Edit Segment" : "New Segment"}
             </h2>
             <SegmentForm
@@ -97,29 +119,37 @@ export default function Index() {
           {/* Right: Timeline + Table */}
           <div className="space-y-5 min-w-0">
             {segments.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground">
-                <p className="text-lg font-medium mb-2">No segments yet</p>
-                <p className="text-sm max-w-xs">Enter a video name, then log segments with frame numbers. Export to CSV when done.</p>
+              <div className="rounded-2xl bg-card border border-border p-12 shadow-sm flex flex-col items-center justify-center text-center">
+                <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
+                  <Film className="h-7 w-7 text-muted-foreground" />
+                </div>
+                <p className="text-lg font-semibold text-foreground mb-2">No segments yet</p>
+                <p className="text-sm text-muted-foreground max-w-xs">Enter a video name, then log segments with frame numbers. Export to CSV when done.</p>
               </div>
             ) : (
               <>
-                <Timeline segments={segments} onSelect={setEditing} />
-                <SegmentTable
-                  segments={segments}
-                  onEdit={setEditing}
-                  onDelete={deleteSegment}
-                  selectedId={editing?.id ?? null}
-                />
+                <div className="rounded-2xl bg-card border border-border p-5 shadow-sm">
+                  <Timeline segments={segments} onSelect={setEditing} />
+                </div>
+                <div className="rounded-2xl bg-card border border-border shadow-sm overflow-hidden">
+                  <SegmentTable
+                    segments={segments}
+                    onEdit={setEditing}
+                    onDelete={deleteSegment}
+                    selectedId={editing?.id ?? null}
+                  />
+                </div>
                 {/* Actions */}
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-3">
                   <Button
                     onClick={() => exportCSV(videoName, segments)}
                     disabled={!videoName}
+                    className="rounded-xl px-5"
                   >
                     <Download className="h-4 w-4 mr-2" />
                     Export CSV
                   </Button>
-                  <Button variant="destructive" onClick={handleClearAll}>
+                  <Button variant="destructive" onClick={handleClearAll} className="rounded-xl px-5">
                     <Trash2 className="h-4 w-4 mr-2" />
                     Clear All
                   </Button>
