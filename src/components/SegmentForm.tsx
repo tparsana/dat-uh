@@ -19,6 +19,8 @@ import {
 } from "./ui/collapsible";
 
 interface Props {
+  participantId: string;
+  onParticipantIdChange: (value: string) => void;
   videoName: string;
   onVideoNameChange: (value: string) => void;
   resetSignal: number;
@@ -43,6 +45,8 @@ const EMPTY: Omit<Segment, "id"> = {
 };
 
 export function SegmentForm({
+  participantId,
+  onParticipantIdChange,
   videoName,
   onVideoNameChange,
   resetSignal,
@@ -137,6 +141,16 @@ export function SegmentForm({
 
   return (
     <div className="space-y-4" onKeyDown={handleKeyDown}>
+      <div className="space-y-1.5">
+        <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Participant ID</Label>
+        <Input
+          value={participantId}
+          onChange={e => onParticipantIdChange(e.target.value)}
+          placeholder="Enter participant ID..."
+          className="font-mono rounded-xl"
+        />
+      </div>
+
       <div className="space-y-1.5">
         <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Video Name</Label>
         <Input

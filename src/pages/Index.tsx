@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Download, Trash2, Film } from "lucide-react";
 
 export default function Index() {
+  const [participantId, setParticipantId] = useState("");
   const [videoName, setVideoName] = useState("");
   const [segments, setSegments] = useState<Segment[]>([]);
   const [editing, setEditing] = useState<Segment | null>(null);
@@ -28,13 +29,14 @@ export default function Index() {
 
   useEffect(() => {
     const data = loadData();
+    setParticipantId(data.participantId);
     setVideoName(data.videoName);
     setSegments(data.segments);
   }, []);
 
   useEffect(() => {
-    saveData({ videoName, segments });
-  }, [videoName, segments]);
+    saveData({ participantId, videoName, segments });
+  }, [participantId, videoName, segments]);
 
   const addSegment = useCallback((seg: Omit<Segment, "id">) => {
     setSegments(prev => [...prev, { ...seg, id: crypto.randomUUID() }]);
@@ -51,6 +53,7 @@ export default function Index() {
   }, [editing]);
 
   const handleClearAll = () => {
+    setParticipantId("");
     setVideoName("");
     setSegments([]);
     setEditing(null);
@@ -96,6 +99,8 @@ export default function Index() {
                 {editing ? "Edit Stage" : "New Stage"}
               </h2>
               <SegmentForm
+                participantId={participantId}
+                onParticipantIdChange={setParticipantId}
                 videoName={videoName}
                 onVideoNameChange={setVideoName}
                 resetSignal={resetSignal}
@@ -110,8 +115,8 @@ export default function Index() {
             <div className="rounded-2xl bg-card border border-border p-4 shadow-sm">
               <div className="grid grid-cols-2 gap-3">
                 <Button
-                  onClick={() => exportCSV(videoName, segments)}
-                  disabled={!videoName || segments.length === 0}
+                  onClick={() => exportCSV(participantId, videoName, segments)}
+                  disabled={!participantId || !videoName || segments.length === 0}
                   className="rounded-xl w-full"
                 >
                   <Download className="h-4 w-4 mr-2" />
@@ -122,7 +127,7 @@ export default function Index() {
                   <AlertDialogTrigger asChild>
                     <Button
                       variant="destructive"
-                      disabled={!videoName && segments.length === 0}
+                      disabled={!participantId && !videoName && segments.length === 0}
                       className="rounded-xl w-full"
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
@@ -133,7 +138,7 @@ export default function Index() {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Clear all fields?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will remove the video name and all stage entries from the current session. This cannot be undone.
+                        This will remove the participant ID, video name, and all stage entries from the current session. This cannot be undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -159,7 +164,7 @@ export default function Index() {
                   <Film className="h-7 w-7 text-muted-foreground" />
                 </div>
                 <p className="text-lg font-semibold text-foreground mb-2">No stages yet</p>
-                <p className="text-sm text-muted-foreground max-w-xs">Enter a video name, then log stage changes with frame numbers. Export to CSV when done.</p>
+                <p className="text-sm text-muted-foreground max-w-xs">Enter a participant ID and video name, then log stage changes with frame numbers. Export to CSV when done.</p>
               </div>
             ) : (
               <>

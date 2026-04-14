@@ -13,19 +13,19 @@ export interface Segment {
 }
 
 export const STAGE_MAP: Record<string, number> = {
-  "Background": 0,
-  "Opening box": 1,
-  "Taking pill": 2,
-  "Pill to mouth": 3,
-  "Closing box": 4,
+  "background": 0,
+  "open pillcase": 1,
+  "pickup pill": 2,
+  "release pill": 3,
+  "close pillcase": 4,
 };
 
 export const STAGE_LABELS: string[] = [
-  "Background",
-  "Opening box",
-  "Taking pill",
-  "Pill to mouth",
-  "Closing box",
+  "background",
+  "open pillcase",
+  "pickup pill",
+  "release pill",
+  "close pillcase",
 ];
 
 export const STAGE_COLORS: Record<number, string> = {
