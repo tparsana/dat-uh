@@ -1,3 +1,3 @@
-# Welcome to your Lovable project
+# dat-uh
 
-TODO: Document your project here
+Frame-by-frame stage annotation tool for logging video states and exporting CSV.
